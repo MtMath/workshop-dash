@@ -27,6 +27,7 @@ import { motion } from "framer-motion";
 import { workshopsService } from "../services/workshopsService";
 import { collaboratorsService } from "../services/collaboratorsService";
 import { Workshop, Collaborator } from "../types";
+import { DashboardCard } from "../components/dashboard/DashboardCard";
 
 export default function Dashboard() {
   const theme = useTheme();
@@ -180,206 +181,33 @@ export default function Dashboard() {
         >
           <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={6} md={3}>
-              <motion.div variants={itemVariants}>
-                <Paper
-                  elevation={2}
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      p: 3,
-                      bgcolor: alpha(theme.palette.primary.main, 0.1),
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        bgcolor: "primary.main",
-                        color: "primary.contrastText",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        p: 1,
-                        borderRadius: 1,
-                        mr: 2,
-                      }}
-                    >
-                      <EventIcon />
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Total de Workshops
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        fontWeight="bold"
-                        color="primary.main"
-                      >
-                        {totalWorkshops}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      p: 2,
-                      textAlign: "center",
-                      mt: "auto",
-                    }}
-                  >
-                    <Button
-                      component={Link}
-                      to="/workshops"
-                      size="small"
-                      endIcon={<ArrowForwardIcon />}
-                    >
-                      Ver todos
-                    </Button>
-                  </Box>
-                </Paper>
-              </motion.div>
+              <DashboardCard
+                title="Total de Workshops"
+                value={totalWorkshops}
+                color="primary"
+                icon={<EventIcon />}
+                linkTo="/workshops"
+              ></DashboardCard>
             </Grid>
 
             <Grid item xs={12} sm={6} md={3}>
-              <motion.div variants={itemVariants}>
-                <Paper
-                  elevation={2}
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      p: 3,
-                      bgcolor: alpha(theme.palette.success.main, 0.1),
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        bgcolor: "success.main",
-                        color: "success.contrastText",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        p: 1,
-                        borderRadius: 1,
-                        mr: 2,
-                      }}
-                    >
-                      <PeopleIcon />
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Total de Colaboradores
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        fontWeight="bold"
-                        color="success.main"
-                      >
-                        {totalCollaborators}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      p: 2,
-                      textAlign: "center",
-                      mt: "auto",
-                    }}
-                  >
-                    <Button
-                      component={Link}
-                      to="/collaborators"
-                      size="small"
-                      color="success"
-                      endIcon={<ArrowForwardIcon />}
-                    >
-                      Ver todos
-                    </Button>
-                  </Box>
-                </Paper>
-              </motion.div>
+              <DashboardCard
+                title="Total de Colaboradores"
+                value={totalCollaborators}
+                color="success"
+                icon={<PeopleIcon />}
+                linkTo="/collaborators"
+              ></DashboardCard>
             </Grid>
 
             <Grid item xs={12} sm={6} md={3}>
-              <motion.div variants={itemVariants}>
-                <Paper
-                  elevation={2}
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      p: 3,
-                      bgcolor: alpha(theme.palette.info.main, 0.1),
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        bgcolor: "info.main",
-                        color: "info.contrastText",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        p: 1,
-                        borderRadius: 1,
-                        mr: 2,
-                      }}
-                    >
-                      <DateRangeIcon />
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Workshops Futuros
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        fontWeight="bold"
-                        color="info.main"
-                      >
-                        {upcomingWorkshops.length}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      p: 2,
-                      textAlign: "center",
-                      mt: "auto",
-                    }}
-                  >
-                    <Button
-                      component={Link}
-                      to="/workshops"
-                      size="small"
-                      color="info"
-                      endIcon={<ArrowForwardIcon />}
-                    >
-                      Visualizar
-                    </Button>
-                  </Box>
-                </Paper>
-              </motion.div>
+              <DashboardCard
+                title="Workshops Futuros"
+                value={upcomingWorkshops.length}
+                color="info"
+                icon={<DateRangeIcon />}
+                linkTo="/workshops"
+              ></DashboardCard>
             </Grid>
 
             <Grid item xs={12} sm={6} md={3}>
