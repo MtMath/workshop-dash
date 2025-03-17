@@ -1,38 +1,41 @@
 import { api } from "./api";
 
 export interface AuthResponse {
-  token: string;
-  user: { email: string };
+  accessToken: string;
+  expiresIn: number;
+  refreshToken: string;
+  tokenType: string;
 }
 
-export const authService = {
+class AuthService {
+  constructor() {}
+
   async register(email: string, password: string): Promise<AuthResponse> {
-    return new Promise((resolve) =>
-      setTimeout(() => {
-        const mockResponse: AuthResponse = {
-          token: "mocked-token-123",
-          user: { email },
-        };
-        localStorage.setItem("token", mockResponse.token);
-        resolve(mockResponse);
-      }, 500)
-    );
-  },
+    const response = await api.post("/account/register", {
+      email,
+      password,
+    });
+
+    if (response.status !== 200) throw new Error("Failed to register");
+
+    return response.data;
+  }
 
   async login(email: string, password: string): Promise<AuthResponse> {
-    return new Promise((resolve) =>
-      setTimeout(() => {
-        const mockResponse: AuthResponse = {
-          token: "mocked-token-123",
-          user: { email },
-        };
-        localStorage.setItem("token", mockResponse.token);
-        resolve(mockResponse);
-      }, 500)
-    );
-  },
+    const response = await api.post("/account/login", {
+      email,
+      password,
+    });
+
+    // This so wrong, but we will fix it later
+    localStorage.setItem("token", response.data.accessToken);
+
+    return response.data;
+  }
 
   logout() {
     localStorage.removeItem("token");
-  },
-};
+  }
+}
+
+export const authService = new AuthService();

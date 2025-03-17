@@ -1,50 +1,85 @@
+import {
+  Workshop,
+  ApiResponse,
+  AttendeesRecordRequest,
+  WorkshopRequest,
+} from "../types";
 import { api } from "./api";
-import { Colaborador } from "./colaboradoresService";
 
-export interface Workshop {
-  id: number;
-  nome: string;
-  dataRealizacao: string;
-  descricao: string;
-  colaboradores: Colaborador[];
+class WorkshopsService {
+  constructor() {}
+
+  async getAll(): Promise<ApiResponse<Workshop[]>> {
+    const response = await api.get("/workshops");
+    return response.data;
+  }
+
+  async getById(id: number): Promise<ApiResponse<Workshop> | null> {
+    const response = await api.get(`/workshops/${id}`);
+
+    if (response.status === 404) {
+      return null;
+    }
+
+    return response.data;
+  }
+
+  async getAttendeesRecords(
+    id: number
+  ): Promise<ApiResponse<AttendeesRecordRequest[]>> {
+    const response = await api.get(`/workshops/${id}/attendees`);
+
+    return response.data;
+  }
+
+  async create(
+    workshop: WorkshopRequest
+  ): Promise<ApiResponse<Workshop> | null> {
+    await api.post("/workshops", workshop).then((response) => {
+      return response.data;
+    });
+
+    return null;
+  }
+
+  async update(
+    id: number,
+    workshop: WorkshopRequest
+  ): Promise<ApiResponse<Workshop> | null> {
+    await api.put(`/workshops/${id}`, workshop).then((response) => {
+      return response.data;
+    });
+
+    return null;
+  }
+
+  async delete(id: number): Promise<void> {
+    await api.delete(`/workshops/${id}`);
+  }
+
+  async addCollaborator(
+    workshopId: number,
+    collaboratorId: number
+  ): Promise<void> {
+    const payload: AttendeesRecordRequest = {
+      workshopId,
+      collaboratorId,
+    };
+
+    await api.post(`/attendees/add-collaborator`, payload);
+  }
+
+  async removeCollaborator(
+    workshopId: number,
+    collaboratorId: number
+  ): Promise<void> {
+    const payload: AttendeesRecordRequest = {
+      workshopId,
+      collaboratorId,
+    };
+
+    await api.delete("/attendees/remove-collaborator", { data: payload });
+  }
 }
 
-const mockWorkshops: Workshop[] = [
-  {
-    id: 1,
-    nome: "React Avançado",
-    dataRealizacao: "2024-03-14T16:00:00",
-    descricao: "Explorando conceitos avançados do React.",
-    colaboradores: [
-      { id: 1, nome: "Ana Souza" },
-      { id: 2, nome: "Carlos Oliveira" },
-    ],
-  },
-  {
-    id: 2,
-    nome: "APIs REST com .NET",
-    dataRealizacao: "2024-06-13T16:00:00",
-    descricao: "Criando APIs RESTful usando .NET.",
-    colaboradores: [
-      { id: 2, nome: "Carlos Oliveira" },
-      { id: 3, nome: "Mariana Santos" },
-    ],
-  },
-];
-
-export const workshopsService = {
-  async listarTodos(): Promise<Workshop[]> {
-    return new Promise((resolve) =>
-      setTimeout(() => resolve(mockWorkshops), 500)
-    );
-  },
-
-  async obterPorId(id: number): Promise<Workshop | null> {
-    return new Promise((resolve) =>
-      setTimeout(() => {
-        const workshop = mockWorkshops.find((w) => w.id === id);
-        resolve(workshop || null);
-      }, 500)
-    );
-  },
-};
+export const workshopsService = new WorkshopsService();

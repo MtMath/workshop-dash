@@ -1,20 +1,51 @@
+import { ApiResponse, Collaborator } from "../types";
 import { api } from "./api";
 
-export interface Colaborador {
-  id: number;
-  nome: string;
+class CollaboratorService {
+  constructor() {}
+
+  async getAll(): Promise<ApiResponse<Collaborator[]>> {
+    const response = await api.get("/collaborators");
+    return response.data;
+  }
+
+  async getById(id: number): Promise<ApiResponse<Collaborator> | null> {
+    const response = await api.get(`/collaborators/${id}`);
+    return response.data;
+  }
+
+  async create(
+    collaborator: Collaborator
+  ): Promise<ApiResponse<Collaborator> | null> {
+    await api
+      .post("/collaborators", collaborator)
+      .then((response) => {
+        return response.data;
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    return null;
+  }
+
+  async update(
+    id: number,
+    collaborator: Collaborator
+  ): Promise<ApiResponse<Collaborator> | null> {
+    await api
+      .put(`/collaborators/${id}`, collaborator)
+      .then((response) => {
+        return response.data;
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    return null;
+  }
+
+  async delete(id: number): Promise<void> {
+    await api.delete(`/collaborators/${id}`);
+  }
 }
 
-const mockColaboradores: Colaborador[] = [
-  { id: 1, nome: "Ana Souza" },
-  { id: 2, nome: "Carlos Oliveira" },
-  { id: 3, nome: "Mariana Santos" },
-];
-
-export const colaboradoresService = {
-  async listarTodos(): Promise<Colaborador[]> {
-    return new Promise((resolve) =>
-      setTimeout(() => resolve(mockColaboradores), 500)
-    );
-  },
-};
+export const collaboratorsService = new CollaboratorService();
