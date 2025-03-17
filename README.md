@@ -1,54 +1,53 @@
-# React + TypeScript + Vite
+# Docker Build and Run Instructions
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This document provides instructions for building and running your React/TypeScript application using Docker.
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Docker installed on your machine
+- Your application code with a proper `package.json` and build configuration
 
-## Expanding the ESLint configuration
+## Building the Docker Image
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+To build the Docker image, navigate to your project root (where the Dockerfile is located) and run:
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+docker build -t workshop-dashboard .
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+This command builds the Docker image with the tag `workshop-dashboard`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Running the Application
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+After the image is built, you can run it with:
+
+```bash
+docker run -p 3000:80 workshop-dashboard
+```
+
+This command:
+
+- Runs a container from the `workshop-dashboard` image
+- Maps port 3000 on your host to port 80 in the container
+- You can now access your application at http://localhost:3000
+
+## Nginx Configuration
+
+The Dockerfile includes a basic Nginx configuration that:
+
+- Serves your static files
+- Handles SPA routing (redirects all routes to index.html)
+- Applies compression and caching
+
+If you need to customize this configuration, uncomment the line in the Dockerfile that copies the nginx.conf file and create this file in your project root.
+
+## Environment Variables
+
+If your application requires environment variables, you can:
+
+1. Build them into the application at build time using `.env` files (for non-sensitive values)
+2. Pass them at runtime using Docker:
+
+```bash
+docker run -p 3000:80 -e "API_URL=https://api.example.com" workshop-dashboard
 ```
