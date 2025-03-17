@@ -1,8 +1,6 @@
-// File: pages/Login.tsx
 import { useState } from "react";
 import {
   Button,
-  Container,
   TextField,
   Typography,
   Paper,
@@ -59,7 +57,14 @@ export default function Login() {
         background: "linear-gradient(to bottom, #f5f5f5, #e0e0e0)",
       }}
     >
-      <Container maxWidth="xs" sx={{ py: 4 }}>
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: "450px",
+          mx: "auto",
+          p: 2,
+        }}
+      >
         <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -139,7 +144,7 @@ export default function Login() {
             </Typography>
           </Paper>
         </motion.div>
-      </Container>
+      </Box>
     </Box>
   );
 }
