@@ -29,12 +29,29 @@ class AuthService {
 
     // This so wrong, but we will fix it later
     localStorage.setItem("token", response.data.accessToken);
+    localStorage.setItem("refreshToken", response.data.refreshToken);
+
+    return response.data;
+  }
+
+  async refresh(): Promise<AuthResponse> {
+    const refreshToken = localStorage.getItem("refreshToken");
+
+    if (!refreshToken) throw new Error("No refresh token found");
+
+    const response = await api.post("/account/refresh", {
+      refreshToken,
+    });
+
+    localStorage.setItem("token", response.data.accessToken);
+    localStorage.setItem("refreshToken", response.data.refreshToken);
 
     return response.data;
   }
 
   logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
   }
 }
 
