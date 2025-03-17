@@ -1,53 +1,30 @@
+// File: pages/Workshops.tsx
 import { useState, useEffect } from "react";
-import {
-  Container,
-  Typography,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Paper,
-  CircularProgress,
-  Snackbar,
-} from "@mui/material";
-import { Add, Edit, Delete } from "@mui/icons-material";
-import { motion } from "framer-motion";
-import { api } from "../services/api";
-
-interface Collaborator {
-  id: number;
-  nome: string;
-}
-
-interface Workshop {
-  id: number;
-  nome: string;
-  dataRealizacao: string;
-  descricao: string;
-  colaboradores: Collaborator[];
-}
+import { Container, Box, Grid } from "@mui/material";
+import { PageHeader } from "../components/PageHeader";
+import { EmptyState } from "../components/EmptyState";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { FormDialog } from "../components/FormDialog";
+import { Notifications } from "../components/Notifications";
+import { Workshop, WorkshopRequest } from "../types";
+import { workshopsService } from "../services/workshopsService";
+import { WorkshopCard } from "../components/workshops/WorkshopCard";
+import { WorkshopForm } from "../components/workshops/WorkshopForm";
 
 export default function Workshops() {
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
-  const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(
-    null
-  );
   const [openDialog, setOpenDialog] = useState(false);
-  const [formData, setFormData] = useState({
-    id: 0,
-    nome: "",
-    dataRealizacao: "",
-    descricao: "",
+  const [formData, setFormData] = useState<WorkshopRequest>({
+    title: "",
+    date: "",
+    description: "",
   });
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [editingWorkshopId, setEditingWorkshopId] = useState<number | null>(
+    null
+  );
 
   useEffect(() => {
     loadWorkshops();
@@ -56,19 +33,33 @@ export default function Workshops() {
   const loadWorkshops = async () => {
     setLoading(true);
     try {
-      const response = await api.get("/workshops");
+      const response = await workshopsService.getAll();
       setWorkshops(response.data);
-      setLoading(false);
     } catch (error) {
       setErrorMessage("Erro ao carregar workshops");
+      console.error(error);
+    } finally {
       setLoading(false);
     }
   };
 
   const handleOpenDialog = (workshop?: Workshop) => {
-    setFormData(
-      workshop || { id: 0, nome: "", dataRealizacao: "", descricao: "" }
-    );
+    if (workshop) {
+      setFormData({
+        title: workshop.name,
+        date: workshop.realizationDate.split("T")[0],
+        capacity: workshop.capacity,
+        description: workshop.description,
+      });
+      setEditingWorkshopId(workshop.id);
+    } else {
+      setFormData({
+        title: "",
+        date: "",
+        description: "",
+      });
+      setEditingWorkshopId(null);
+    }
     setOpenDialog(true);
   };
 
@@ -77,184 +68,123 @@ export default function Workshops() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      if (formData.id) {
-        await api.put(`/workshops/${formData.id}`, formData);
+      if (editingWorkshopId !== null) {
+        await workshopsService.update(editingWorkshopId, formData);
         setSuccessMessage("Workshop atualizado com sucesso!");
       } else {
-        await api.post("/workshops", formData);
+        await workshopsService.create(formData);
         setSuccessMessage("Workshop criado com sucesso!");
       }
       setOpenDialog(false);
       loadWorkshops();
     } catch (error) {
       setErrorMessage("Erro ao salvar workshop");
-    }
-    setLoading(false);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (window.confirm("Tem certeza que deseja excluir?")) {
-      setLoading(true);
-      try {
-        await api.delete(`/workshops/${id}`);
-        setSuccessMessage("Workshop excluído com sucesso!");
-        loadWorkshops();
-      } catch (error) {
-        setErrorMessage("Erro ao excluir workshop");
-      }
+      console.error(error);
+    } finally {
       setLoading(false);
     }
   };
 
+  const handleDelete = async (id: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (window.confirm("Tem certeza que deseja excluir?")) {
+      setLoading(true);
+      try {
+        await workshopsService.delete(id);
+        setSuccessMessage("Workshop excluído com sucesso!");
+        loadWorkshops();
+      } catch (error) {
+        setErrorMessage("Erro ao excluir workshop");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleEdit = (workshop: Workshop, event: React.MouseEvent) => {
+    event.stopPropagation();
+    handleOpenDialog(workshop);
+  };
+
+  // Update workshops when attendees change
+  const handleAttendeeUpdate = () => {
+    loadWorkshops();
+    setSuccessMessage("Participantes atualizados com sucesso!");
+  };
+
   return (
-    <Container>
-      <Typography variant="h4" fontWeight="bold" mt={4} mb={2} color="primary">
-        Workshops
-      </Typography>
-
-      <motion.div whileHover={{ scale: 1.05 }}>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => handleOpenDialog()}
-          sx={{ mb: 2 }}
-        >
-          Novo Workshop
-        </Button>
-      </motion.div>
-
-      {loading ? (
-        <CircularProgress
-          color="primary"
-          sx={{ display: "block", margin: "auto", marginTop: 5 }}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        flex: 1,
+      }}
+    >
+      <Container
+        sx={{
+          width: "100%",
+          maxWidth: "100% !important",
+          px: { xs: 2, sm: 3, md: 4 },
+          py: 4,
+          flex: 1,
+        }}
+      >
+        <PageHeader
+          title="Workshops"
+          subtitle="Gerencie seus workshops e participantes"
+          onAddNew={() => handleOpenDialog()}
+          addButtonText="Novo Workshop"
         />
-      ) : (
-        <Paper elevation={3} sx={{ p: 2 }}>
-          <List>
-            {workshops.map((workshop) => (
-              <ListItem
-                key={workshop.id}
-                divider
-                button
-                onClick={() => setSelectedWorkshop(workshop)}
-                sx={{ cursor: "pointer" }}
-              >
-                <ListItemText
-                  primary={workshop.nome}
-                  secondary={`Data: ${new Date(
-                    workshop.dataRealizacao
-                  ).toLocaleDateString()}`}
-                />
-                <motion.div whileHover={{ scale: 1.1 }}>
-                  <IconButton onClick={() => handleOpenDialog(workshop)}>
-                    <Edit color="primary" />
-                  </IconButton>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.1 }}>
-                  <IconButton onClick={() => handleDelete(workshop.id)}>
-                    <Delete color="error" />
-                  </IconButton>
-                </motion.div>
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
-      )}
 
-      {/* Dialog para Criar/Editar Workshop */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>
-          {formData.id ? "Editar Workshop" : "Novo Workshop"}
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Nome"
-            value={formData.nome}
-            onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Data"
-            type="date"
-            value={formData.dataRealizacao}
-            onChange={(e) =>
-              setFormData({ ...formData, dataRealizacao: e.target.value })
-            }
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Descrição"
-            multiline
-            rows={3}
-            value={formData.descricao}
-            onChange={(e) =>
-              setFormData({ ...formData, descricao: e.target.value })
-            }
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="secondary">
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSave}
-            variant="contained"
-            color="primary"
-            disabled={loading}
-          >
-            {loading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : formData.id ? (
-              "Salvar"
+        {loading && !openDialog ? (
+          <LoadingSpinner />
+        ) : (
+          <Box>
+            {workshops.length === 0 ? (
+              <EmptyState
+                message="Nenhum workshop encontrado"
+                submessage="Clique em 'Novo Workshop' para começar"
+              />
             ) : (
-              "Criar"
+              <Grid container spacing={3}>
+                {workshops.map((workshop) => (
+                  <Grid item xs={12} key={workshop.id}>
+                    <WorkshopCard
+                      workshop={workshop}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onUpdate={handleAttendeeUpdate}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
             )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </Box>
+        )}
 
-      {/* Exibir detalhes dos colaboradores */}
-      {selectedWorkshop && (
-        <Paper elevation={3} sx={{ p: 2, mt: 3 }}>
-          <Typography variant="h5">{selectedWorkshop.nome}</Typography>
-          <Typography variant="body1" color="text.secondary" mb={1}>
-            {selectedWorkshop.descricao}
-          </Typography>
-          <Typography variant="h6" fontWeight="bold" mt={2}>
-            Colaboradores Presentes
-          </Typography>
-          <List>
-            {selectedWorkshop.colaboradores.map((colaborador) => (
-              <ListItem key={colaborador.id}>
-                <ListItemText primary={colaborador.nome} />
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
-      )}
+        <FormDialog
+          open={openDialog}
+          title={
+            editingWorkshopId !== null ? "Editar Workshop" : "Novo Workshop"
+          }
+          onClose={handleCloseDialog}
+          onSave={handleSave}
+          loading={loading}
+          isEdit={editingWorkshopId !== null}
+          disabled={!formData.title || !formData.date || !formData.description}
+        >
+          <WorkshopForm formData={formData} setFormData={setFormData} />
+        </FormDialog>
 
-      {/* Snackbars para feedback */}
-      {successMessage && (
-        <Snackbar
-          open={Boolean(successMessage)}
-          autoHideDuration={6000}
-          onClose={() => setSuccessMessage(null)}
-          message={successMessage}
+        <Notifications
+          successMessage={successMessage}
+          errorMessage={errorMessage}
+          onCloseSuccess={() => setSuccessMessage(null)}
+          onCloseError={() => setErrorMessage(null)}
         />
-      )}
-      {errorMessage && (
-        <Snackbar
-          open={Boolean(errorMessage)}
-          autoHideDuration={6000}
-          onClose={() => setErrorMessage(null)}
-          message={errorMessage}
-        />
-      )}
-    </Container>
+      </Container>
+    </Box>
   );
 }

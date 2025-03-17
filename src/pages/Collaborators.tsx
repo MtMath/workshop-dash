@@ -1,39 +1,27 @@
 import { useState, useEffect } from "react";
-import {
-  Container,
-  Typography,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
-  Paper,
-  CircularProgress,
-  Snackbar,
-} from "@mui/material";
-import { Add, Edit, Delete } from "@mui/icons-material";
-import { motion } from "framer-motion";
-import { api } from "../services/api";
-
-interface Collaborator {
-  id: number;
-  nome: string;
-}
+import { Container, Box, Grid } from "@mui/material";
+import { PageHeader } from "../components/PageHeader";
+import { EmptyState } from "../components/EmptyState";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { FormDialog } from "../components/FormDialog";
+import { Notifications } from "../components/Notifications";
+import { CollaboratorCard } from "../components/collaborators/CollaboratorCard";
+import { CollaboratorForm } from "../components/collaborators/CollaboratorForm";
+import { Collaborator, CollaboratorRequest } from "../types";
+import { collaboratorsService } from "../services/collaboratorsService";
 
 export default function Collaborators() {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
-  const [selectedCollaborator, setSelectedCollaborator] =
-    useState<Collaborator | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [formData, setFormData] = useState({ id: 0, nome: "" });
+  const [formData, setFormData] = useState<CollaboratorRequest>({
+    name: "",
+  });
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [editingCollaboratorId, setEditingCollaboratorId] = useState<
+    number | null
+  >(null);
 
   useEffect(() => {
     loadCollaborators();
@@ -42,17 +30,28 @@ export default function Collaborators() {
   const loadCollaborators = async () => {
     setLoading(true);
     try {
-      const response = await api.get("/collaborators");
+      const response = await collaboratorsService.getAll();
       setCollaborators(response.data);
-      setLoading(false);
     } catch (error) {
       setErrorMessage("Erro ao carregar colaboradores");
+      console.error(error);
+    } finally {
       setLoading(false);
     }
   };
 
   const handleOpenDialog = (collaborator?: Collaborator) => {
-    setFormData(collaborator || { id: 0, nome: "" });
+    if (collaborator) {
+      setFormData({
+        name: collaborator.name,
+      });
+      setEditingCollaboratorId(collaborator.id);
+    } else {
+      setFormData({
+        name: "",
+      });
+      setEditingCollaboratorId(null);
+    }
     setOpenDialog(true);
   };
 
@@ -61,147 +60,126 @@ export default function Collaborators() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      if (formData.id) {
-        await api.put(`/collaborators/${formData.id}`, formData);
+      if (editingCollaboratorId !== null) {
+        // Find the existing collaborator to preserve attendances data
+        const existingCollaborator = collaborators.find(
+          (c) => c.id === editingCollaboratorId
+        );
+
+        // Need to create a full Collaborator object for the update
+        const collaboratorData: Collaborator = {
+          id: editingCollaboratorId,
+          name: formData.name,
+          attendances: existingCollaborator?.attendances || [],
+        };
+
+        await collaboratorsService.update(
+          editingCollaboratorId,
+          collaboratorData
+        );
         setSuccessMessage("Colaborador atualizado com sucesso!");
       } else {
-        await api.post("/collaborators", formData);
+        // For create, we'll need to create a temporary ID since the service expects a Collaborator
+        // In reality, the API would generate this ID
+        const newCollaborator: Collaborator = {
+          id: 0,
+          name: formData.name,
+          attendances: [],
+        };
+
+        await collaboratorsService.create(newCollaborator);
         setSuccessMessage("Colaborador criado com sucesso!");
       }
       setOpenDialog(false);
       loadCollaborators();
     } catch (error) {
       setErrorMessage("Erro ao salvar colaborador");
-    }
-    setLoading(false);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (window.confirm("Tem certeza que deseja excluir?")) {
-      setLoading(true);
-      try {
-        await api.delete(`/collaborators/${id}`);
-        setSuccessMessage("Colaborador excluído com sucesso!");
-        loadCollaborators();
-      } catch (error) {
-        setErrorMessage("Erro ao excluir colaborador");
-      }
+      console.error(error);
+    } finally {
       setLoading(false);
     }
   };
 
+  const handleDelete = async (id: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (window.confirm("Tem certeza que deseja excluir?")) {
+      setLoading(true);
+      try {
+        await collaboratorsService.delete(id);
+        setSuccessMessage("Colaborador excluído com sucesso!");
+        loadCollaborators();
+      } catch (error) {
+        setErrorMessage("Erro ao excluir colaborador");
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleEdit = (collaborator: Collaborator, event: React.MouseEvent) => {
+    event.stopPropagation();
+    handleOpenDialog(collaborator);
+  };
+
   return (
-    <Container>
-      <Typography variant="h4" fontWeight="bold" mt={4} mb={2} color="primary">
-        Colaboradores
-      </Typography>
-
-      <motion.div whileHover={{ scale: 1.05 }}>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => handleOpenDialog()}
-          sx={{ mb: 2 }}
-        >
-          Novo Colaborador
-        </Button>
-      </motion.div>
-
-      {loading ? (
-        <CircularProgress
-          color="primary"
-          sx={{ display: "block", margin: "auto", marginTop: 5 }}
+    <Container maxWidth="lg">
+      <Box sx={{ py: 4 }}>
+        <PageHeader
+          title="Colaboradores"
+          subtitle="Gerencie os colaboradores da sua empresa"
+          onAddNew={() => handleOpenDialog()}
+          addButtonText="Novo Colaborador"
         />
-      ) : (
-        <Paper elevation={3} sx={{ p: 2 }}>
-          <List>
-            {collaborators.map((collaborator) => (
-              <ListItem
-                key={collaborator.id}
-                divider
-                button
-                onClick={() => setSelectedCollaborator(collaborator)}
-                sx={{ cursor: "pointer" }}
-              >
-                <ListItemText primary={collaborator.nome} />
-                <motion.div whileHover={{ scale: 1.1 }}>
-                  <IconButton onClick={() => handleOpenDialog(collaborator)}>
-                    <Edit color="primary" />
-                  </IconButton>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.1 }}>
-                  <IconButton onClick={() => handleDelete(collaborator.id)}>
-                    <Delete color="error" />
-                  </IconButton>
-                </motion.div>
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
-      )}
 
-      {/* Dialog para Criar/Editar Colaborador */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>
-          {formData.id ? "Editar Colaborador" : "Novo Colaborador"}
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Nome"
-            value={formData.nome}
-            onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} color="secondary">
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSave}
-            variant="contained"
-            color="primary"
-            disabled={loading}
-          >
-            {loading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : formData.id ? (
-              "Salvar"
+        {loading && !openDialog ? (
+          <LoadingSpinner />
+        ) : (
+          <Box>
+            {collaborators.length === 0 ? (
+              <EmptyState
+                message="Nenhum colaborador encontrado"
+                submessage="Clique em 'Novo Colaborador' para começar"
+              />
             ) : (
-              "Criar"
+              <Grid container spacing={3}>
+                {collaborators.map((collaborator) => (
+                  <Grid item xs={12} key={collaborator.id}>
+                    <CollaboratorCard
+                      collaborator={collaborator}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
             )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </Box>
+        )}
 
-      {/* Exibir detalhes do colaborador */}
-      {selectedCollaborator && (
-        <Paper elevation={3} sx={{ p: 2, mt: 3 }}>
-          <Typography variant="h5">{selectedCollaborator.nome}</Typography>
-          <Typography variant="body1" color="text.secondary" mb={1}>
-            Detalhes do colaborador
-          </Typography>
-        </Paper>
-      )}
+        <FormDialog
+          open={openDialog}
+          title={
+            editingCollaboratorId !== null
+              ? "Editar Colaborador"
+              : "Novo Colaborador"
+          }
+          onClose={handleCloseDialog}
+          onSave={handleSave}
+          loading={loading}
+          isEdit={editingCollaboratorId !== null}
+          disabled={!formData.name}
+        >
+          <CollaboratorForm formData={formData} setFormData={setFormData} />
+        </FormDialog>
 
-      {/* Snackbars para feedback */}
-      {successMessage && (
-        <Snackbar
-          open={Boolean(successMessage)}
-          autoHideDuration={6000}
-          onClose={() => setSuccessMessage(null)}
-          message={successMessage}
+        <Notifications
+          successMessage={successMessage}
+          errorMessage={errorMessage}
+          onCloseSuccess={() => setSuccessMessage(null)}
+          onCloseError={() => setErrorMessage(null)}
         />
-      )}
-      {errorMessage && (
-        <Snackbar
-          open={Boolean(errorMessage)}
-          autoHideDuration={6000}
-          onClose={() => setErrorMessage(null)}
-          message={errorMessage}
-        />
-      )}
+      </Box>
     </Container>
   );
 }

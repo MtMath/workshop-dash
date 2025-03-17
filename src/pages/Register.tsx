@@ -1,7 +1,15 @@
 import { useState } from "react";
-import { Button, Container, TextField, Typography, Paper } from "@mui/material";
+import {
+  Button,
+  Container,
+  TextField,
+  Typography,
+  Paper,
+  Snackbar,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { authService } from "../services/authService";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -9,13 +17,19 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const handleRegister = () => {
     if (password !== confirmPassword) {
-      alert("As senhas não coincidem!");
+      setErrorMessage("As senhas não coincidem!");
       return;
     }
     console.log("Register with:", email, password);
-    // Aqui chamaria o service de registro
+    authService.register(email, password).then((response) => {
+      console.log("Register response:", response);
+      navigate("/login");
+    });
   };
 
   return (
@@ -29,7 +43,6 @@ export default function Register() {
           elevation={4}
           sx={{ p: 4, mt: 10, textAlign: "center", borderRadius: 3 }}
         >
-          {/* Título */}
           <Typography variant="h4" fontWeight="bold" color="primary" mb={2}>
             Criar Conta
           </Typography>
@@ -37,7 +50,6 @@ export default function Register() {
             Registre-se para acessar os workshops.
           </Typography>
 
-          {/* Campos de entrada */}
           <TextField
             fullWidth
             label="Email"
@@ -66,7 +78,6 @@ export default function Register() {
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
 
-          {/* Botão de Registro */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               fullWidth
@@ -79,7 +90,6 @@ export default function Register() {
             </Button>
           </motion.div>
 
-          {/* Link para Login */}
           <Typography variant="body2" color="text.secondary" mt={2}>
             Já tem uma conta?{" "}
             <Typography
@@ -93,6 +103,24 @@ export default function Register() {
           </Typography>
         </Paper>
       </motion.div>
+
+      {/* Snackbars para feedback */}
+      {successMessage && (
+        <Snackbar
+          open={Boolean(successMessage)}
+          autoHideDuration={6000}
+          onClose={() => setSuccessMessage(null)}
+          message={successMessage}
+        />
+      )}
+      {errorMessage && (
+        <Snackbar
+          open={Boolean(errorMessage)}
+          autoHideDuration={6000}
+          onClose={() => setErrorMessage(null)}
+          message={errorMessage}
+        />
+      )}
     </Container>
   );
 }
