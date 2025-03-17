@@ -1,11 +1,11 @@
 import { useState } from "react";
 import {
   Button,
-  Container,
   TextField,
   Typography,
   Paper,
   Snackbar,
+  Box,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -33,76 +33,100 @@ export default function Register() {
   };
 
   return (
-    <Container maxWidth="xs">
-      <motion.div
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        width: "100%",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "linear-gradient(to bottom, #f5f5f5, #e0e0e0)",
+      }}
+    >
+      <Box
+        sx={{
+          width: "100%",
+          maxWidth: "450px",
+          mx: "auto",
+          p: 2,
+        }}
       >
-        <Paper
-          elevation={4}
-          sx={{ p: 4, mt: 10, textAlign: "center", borderRadius: 3 }}
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          <Typography variant="h4" fontWeight="bold" color="primary" mb={2}>
-            Criar Conta
-          </Typography>
-          <Typography variant="body1" color="text.secondary" mb={3}>
-            Registre-se para acessar os workshops.
-          </Typography>
-
-          <TextField
-            fullWidth
-            label="Email"
-            type="email"
-            variant="outlined"
-            margin="normal"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            label="Senha"
-            type="password"
-            variant="outlined"
-            margin="normal"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <TextField
-            fullWidth
-            label="Confirmar Senha"
-            type="password"
-            variant="outlined"
-            margin="normal"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              sx={{ mt: 3 }}
-              onClick={handleRegister}
-            >
-              Registrar
-            </Button>
-          </motion.div>
-
-          <Typography variant="body2" color="text.secondary" mt={2}>
-            Já tem uma conta?{" "}
-            <Typography
-              component="span"
-              color="primary"
-              sx={{ cursor: "pointer" }}
-              onClick={() => navigate("/login")}
-            >
-              Faça login
+          <Paper
+            elevation={4}
+            sx={{
+              p: 4,
+              textAlign: "center",
+              borderRadius: 3,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+            }}
+          >
+            <Typography variant="h4" fontWeight="bold" color="primary" mb={2}>
+              Criar Conta
             </Typography>
-          </Typography>
-        </Paper>
-      </motion.div>
+            <Typography variant="body1" color="text.secondary" mb={3}>
+              Registre-se para acessar os workshops.
+            </Typography>
+
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              variant="outlined"
+              margin="normal"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="Senha"
+              type="password"
+              variant="outlined"
+              margin="normal"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              label="Confirmar Senha"
+              type="password"
+              variant="outlined"
+              margin="normal"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                sx={{ mt: 3 }}
+                onClick={handleRegister}
+              >
+                Registrar
+              </Button>
+            </motion.div>
+
+            <Typography variant="body2" color="text.secondary" mt={2}>
+              Já tem uma conta?{" "}
+              <Typography
+                component="span"
+                color="primary"
+                sx={{ cursor: "pointer", fontWeight: "bold" }}
+                onClick={() => navigate("/login")}
+              >
+                Faça login
+              </Typography>
+            </Typography>
+          </Paper>
+        </motion.div>
+      </Box>
 
       {/* Snackbars para feedback */}
       {successMessage && (
@@ -121,6 +145,6 @@ export default function Register() {
           message={errorMessage}
         />
       )}
-    </Container>
+    </Box>
   );
 }
