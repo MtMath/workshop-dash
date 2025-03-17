@@ -1,0 +1,16 @@
+{
+    "data": [
+        {
+            "id": 1,
+            "name": "Collaborator 1"
+        },
+        {
+            "id": 2,
+            "name": "Collaborator 2"
+        },
+        {
+            "id": 3,
+            "name": "Collaborator 3"
+        }
+    ]
+}
