@@ -173,7 +173,6 @@ export default function Dashboard() {
           Visão geral de workshops e colaboradores
         </Typography>
 
-        {/* Stats Cards */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -586,7 +585,6 @@ export default function Dashboard() {
           </Paper>
         </motion.div>
 
-        {/* Quick Actions */}
         <motion.div variants={itemVariants} initial="hidden" animate="visible">
           <Paper
             elevation={2}

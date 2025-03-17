@@ -1,4 +1,3 @@
-// File: pages/Workshops.tsx
 import { useState, useEffect } from "react";
 import { Container, Box, Grid } from "@mui/material";
 import { PageHeader } from "../components/PageHeader";
